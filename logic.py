@@ -8,8 +8,8 @@ def get_date(ip):
         current_ip = elem.attrib['UserIPAddr']
         if current_ip == ip:
             preresult = elem.attrib['Date2']
-            result = preresult[8:10] + '.'\
-             + preresult[5:7] + '.'\
-             + preresult[:4]
+            result = preresult[8:10] + '.' \
+                     + preresult[5:7] + '.' \
+                     + preresult[:4]
             return result
         return None
