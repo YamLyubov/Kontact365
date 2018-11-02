@@ -13,4 +13,3 @@ def get_date(ip):
              + preresult[:4]
             return result
         return None
-print(get_date('10.11.6.206'))
