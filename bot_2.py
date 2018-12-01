@@ -18,11 +18,15 @@ while True:
             if update['type'] == 'message_new':
                 api.messages.markAsRead(peer_id=update['object']['user_id'])
                 text = update['object']['body'].lower()
-                if text == 'узнать дату':
-                    id = update['object']['user_id']
+                if text == 'начать':
+                    name = api.users.get(user_ids=update['object']['user_id'])[0]['first_name']
+                    api.messages.send(peer_id=update['object']['user_id'],
+                                      message='Здравствуйте, %s. ' % name,
+                                      keyboard=vk_keyboard)
+                elif text == 'узнать дату':
+                    id = str(update['object']['user_id'])
                     with open('IP.json', 'r+', encoding='utf-8') as IP:
                         data = json.load(IP)
-                        print(data)
                         if id in data:
                             date = get_date(data[id])
                             api.messages.send(
@@ -45,7 +49,6 @@ while True:
                         api.messages.send(peer_id=update['object']['user_id'],
                                         message='Доступ к интернету будет'
                                                 ' прекращен в полночь %s ' % date)
-                        ip
                     else:
                         api.messages.send(peer_id=update['object']['user_id'],
                                           message='К сожалению, информации про'
