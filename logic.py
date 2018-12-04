@@ -46,8 +46,8 @@ vk_keyboard = {
     "buttons": [
      [get_button(label="Узнать дату", color='positive')],
      [get_button(label="Оплата через сбербанк онлайн", color='primary')],
-     [get_button(label="Есть ли проблемы со связью", color='primary')]]
-    ]
+     [get_button(label="Есть ли проблемы со связью", color='primary')]
+     ]
 }
 vk_keyboard = json.dumps(vk_keyboard, ensure_ascii=False).encode('utf-8')
 vk_keyboard = str(vk_keyboard.decode('utf-8'))

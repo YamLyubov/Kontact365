@@ -4,6 +4,7 @@ from logic import get_date, save_matching
 from logic import vk_keyboard, tg_token, vk_token
 import json
 import telebot
+from ping import ping
 from requests.auth import HTTPProxyAuth
 
 '''
@@ -82,4 +83,13 @@ while True:
                                                   'ли вы ввели данные или'
                                                   ' обратитесь за помощью к '
                                                   'нашему сотруднику.')
+                elif text == 'есть ли проблемы со связью':
+                    if ping('194.105.212.27'):
+                        api.messages.send(
+                            peer_id=update['object']['user_id'],
+                            message='Всё норм! Проблем нет!')
+                    else:
+                        api.messages.send(
+                            peer_id=update['object']['user_id'],
+                            message='Есть проблемка!')
     ts = longPoll['ts']
