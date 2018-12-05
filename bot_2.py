@@ -5,12 +5,12 @@ from logic import vk_keyboard, tg_token, vk_token
 import json
 import telebot
 from ping import ping
-from requests.auth import HTTPProxyAuth
+import time
+from text import return_date, get_ip, sber, no_ip
+from datetime import datetime
 
-'''
-auth = HTTPProxyAuth("vkbot", "vkbot13042000")
-proxy = {"http": "socks5://80.211.242.87:3180"}
-'''
+
+users = []
 bot = telebot.TeleBot(tg_token)
 session = vk.Session(access_token=vk_token)
 api = vk.API(session, v='5.85')
@@ -19,24 +19,24 @@ server, key, ts = longPoll['server'], longPoll['key'], longPoll['ts']
 url = "https://api.telegram.org/bot{}/".format(tg_token)
 while True:
     longPoll = requests.post('%s'%server, data={'act': 'a_check',
-                                       'key': key,
-                                       'ts': ts,
-                                       'wait': 25}).json()
+                                                'key': key,
+                                                'ts': ts,
+                                                'wait': 90}).json()
     print(longPoll)
     if len(longPoll['updates']) != 0:
+        time = str(datetime.now())[:16]
         for update in longPoll['updates']:
             if update['type'] == 'message_new':
                 api.messages.markAsRead(peer_id=update['object']['user_id'])
                 text = update['object']['body'].lower()
-                '''
-                response = requests.post('%s' %url + 'sendMessage', proxies=dict(http='socks5://vkbot:vkbot13042000@80.211.242.87:3180',
-                                 https='socks5://vkbot:vkbot13042000@80.211.242.87:3180'),
-                                data={'chat_id': 255631997, 'text': text}, verify=False)
-                '''
+                name = api.users.get(user_ids=update['object']['user_id'])[0]['first_name']
+                last_name = api.users.get(user_ids=update['object']['user_id'])[0]['last_name']
+                tg_text = time + ' ' + name + ' ' + last_name + ': ' + text
+                requests.post(url + "sendMessage", data={'chat_id': -255631997,
+                                                         'text': tg_text})
                 if text == 'начать':
-                    name = api.users.get(user_ids=update['object']['user_id'])[0]['first_name']
                     api.messages.send(peer_id=update['object']['user_id'],
-                                      message='Здравствуйте, %s. ' % name,
+                                      message='Здравствуйте, %s, это бот'% name,
                                       keyboard=vk_keyboard)
                 elif text == 'узнать дату':
                     id = str(update['object']['user_id'])
@@ -44,51 +44,40 @@ while True:
                         data = json.load(IP)
                         if id in data:
                             date = get_date(data[id])
+                            message = return_date + date
                             api.messages.send(
                                 peer_id=update['object']['user_id'],
-                                message='Доступ к интернету будет'
-                                        ' прекращен в полночь %s ' % date)
+                                message=message)
                         else:
+                            users.append(update['object']['user_id'])
                             api.messages.send(
                                 peer_id=update['object']['user_id'],
-                                message='Пожалуйста введите IP адресс в формате'
-                                        ':\n 10.10.0.00\nСвой IP можно узнать'
-                                        ' по телефону 8512485.')
+                                message=get_ip)
                 elif text == 'оплата через сбербанк онлайн':
                     api.messages.send(
                         peer_id=update['object']['user_id'],
-                        message='Если будете платить через приложение в телефоне\n'
-                                'Следуйте пунктам:\n1. Платежи/Переводы\n'
-                                '2. Остальные услуги\n3. Поиск: ПК ОИС\n'
-                                '[Получатель: ПК ОИС-Ивангород\n'
-                                'ИНН/СЧЁТ: 4707024525 / 40703810855300000095]\n'
-                                '*И заполните:\nФИО: Фамилия Имя Отчество\n'
-                                'Адрес: Ивангород\nУлица Дом-Квартира\n'
-                                'Назначение:\nЧленские взносы 200\n'
-                                '(вместо 200 указать своё 400 или 500)')
-                elif '10.10.' in text:
+                        message=sber)
+                elif '10.10.' in text and update['object']['user_id'] in users:
                     ip = text
                     date = get_date(ip)
                     if date != '':
                         id = update['object']['user_id']
+                        message = return_date + date
+                        users.remove(update['object']['user_id'])
                         save_matching(id, ip)
                         api.messages.send(peer_id=update['object']['user_id'],
-                                          message='Доступ к интернету будет'
-                                                ' прекращен в полночь %s ' % date)
+                                          message=message)
                     else:
                         api.messages.send(peer_id=update['object']['user_id'],
-                                          message='К сожалению, информации про'
-                                                  ' пользователя с таким IP '
-                                                  'нет. Проверьте, правильно '
-                                                  'ли вы ввели данные или'
-                                                  ' обратитесь за помощью к '
-                                                  'нашему сотруднику.')
+                                          message=no_ip)
                 elif text == 'есть ли проблемы со связью':
                     if ping('194.105.212.27'):
+                        time.sleep(3)
                         api.messages.send(
                             peer_id=update['object']['user_id'],
                             message='Всё норм! Проблем нет!')
                     else:
+                        time.sleep(3)
                         api.messages.send(
                             peer_id=update['object']['user_id'],
                             message='Есть проблемка!')
