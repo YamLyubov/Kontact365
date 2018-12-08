@@ -6,38 +6,13 @@ from const import vk_keyboard, tg_token, vk_token, wb_id, nasa_id, group_id
 import json
 import telebot
 from time import sleep
-from text import greeting, return_date, get_ip, sber, no_ip
+from text import greeting, return_date, get_ip, no_ip, operator
+from text import sber_0, sber_1, sber_2, sber_3, sber_4
 from datetime import datetime
 import sys
-import codecs
 
-def setup_console(sys_enc="utf-8"):
-    reload(sys)
-    try:
-        # для win32 вызываем системную библиотечную функцию
-        if sys.platform.startswith("win"):
-            import ctypes
-            enc = "cp%d" % ctypes.windll.kernel32.GetOEMCP() #TODO: проверить на win64/python64
-        else:
-            # для Linux всё, кажется, есть и так
-            enc = (sys.stdout.encoding if sys.stdout.isatty() else
-                        sys.stderr.encoding if sys.stderr.isatty() else
-                            sys.getfilesystemencoding() or sys_enc)
-
-        # кодировка для sys
-        sys.setdefaultencoding(sys_enc)
-
-        # переопределяем стандартные потоки вывода, если они не перенаправлены
-        if sys.stdout.isatty() and sys.stdout.encoding != enc:
-            sys.stdout = codecs.getwriter(enc)(sys.stdout, 'replace')
-
-        if sys.stderr.isatty() and sys.stderr.encoding != enc:
-            sys.stderr = codecs.getwriter(enc)(sys.stderr, 'replace')
-
-    except:
-        pass # Ошибка? Всё равно какая - работаем по-старому...
-
-
+reload(sys)
+sys.setdefaultencoding('utf-8')
 users = []
 bot = telebot.TeleBot(tg_token)
 session = vk.Session(access_token=vk_token)
@@ -46,11 +21,10 @@ longPoll = api.groups.getLongPollServer(group_id=group_id)
 server, key, ts = longPoll['server'], longPoll['key'], longPoll['ts']
 url = "https://api.telegram.org/bot{}/".format(tg_token)
 while True:
-    longPoll = post('%s'%server, data={'act': 'a_check',
-                                       'key': key,
-                                       'ts': ts,
-                                       'wait': 90}).json()
-    print(longPoll)
+    longPoll = post('%s' % server, data={'act': 'a_check',
+                                         'key': key,
+                                         'ts': ts,
+                                         'wait': 90}).json()
     if len(longPoll['updates']) != 0:
         time = str(datetime.now())[:16]
         for update in longPoll['updates']:
@@ -68,9 +42,9 @@ while True:
                     api.messages.send(peer_id=update['object']['user_id'],
                                       message=greeting,
                                       keyboard=vk_keyboard)
-                elif text == '📅 Узнать дату окончания оплаты 📍':
+                elif text == '📅 Дата окончания оплаты':
                     id = str(update['object']['user_id'])
-                    with open('IP.json', 'r+', encoding='utf-8') as IP:
+                    with open('IP.json', 'r+') as IP:
                         data = json.load(IP)
                         if id in data:
                             date = get_date(data[id])
@@ -83,7 +57,7 @@ while True:
                             api.messages.send(
                                 peer_id=update['object']['user_id'],
                                 message=get_ip)
-                elif '10.10.' in text and update['object']['user_id'] in users:
+                elif '10.10.' in text or update['object']['user_id'] in users:
                     users.remove(update['object']['user_id'])
                     ip = text
                     date = get_date(ip)
@@ -94,23 +68,40 @@ while True:
                         api.messages.send(
                                 peer_id=update['object']['user_id'],
                                 message=message)
+                        api.messages.send(
+                            peer_id=update['object']['user_id'],
+                            message='IP сохранен. Больше писать его не нужно😊')
                     else:
                         api.messages.send(peer_id=update['object']['user_id'],
                                           message=no_ip)
-                elif text == '💳 Оплата через Сбербанк ОнЛ@йн 💰':
+                        api.messages.send(peer_id=update['object']['user_id'],
+                                          attachment='doc-129298566_483539786')
+                elif text == '💳 Сбербанк ОнЛ@йн':
                     api.messages.send(
                         peer_id=update['object']['user_id'],
-                        message=sber,
-                        attachment='photo-129298566_456239067,'
-                                   'photo-129298566_456239068,'
-                                   'photo-129298566_456239069,'
-                                   'photo-129298566_456239070,'
-                                   'photo-129298566_456239071,'
-                                   'photo-129298566_456239072,'
-                                   'photo-129298566_456239073,'
-                                   'photo-129298566_456239074')
+                        message=sber_0)
+                    sleep(2)
+                    api.messages.send(
+                        peer_id=update['object']['user_id'],
+                        message=sber_1,
+                        attachment='photo-129298566_456239068')
+                    sleep(5)
+                    api.messages.send(
+                        peer_id=update['object']['user_id'],
+                        message=sber_2,
+                        attachment='photo-129298566_456239070')
+                    sleep(5)
+                    api.messages.send(
+                        peer_id=update['object']['user_id'],
+                        message=sber_3,
+                        attachment='photo-129298566_456239071')
+                    sleep(5)
+                    api.messages.send(
+                        peer_id=update['object']['user_id'],
+                        message=sber_4,
+                        attachment='photo-129298566_456239074')
 
-                elif text == '🏄🌏 Есть Интернет? 🚀🌖':
+                elif text == '🏄🌏 Есть Интернет?':
                     sleep(1)
                     api.messages.send(peer_id=update['object']['user_id'],
                                       message='Запускаем квантово🔨карпаскуляр'
@@ -133,17 +124,21 @@ while True:
                             peer_id=update['object']['user_id'],
                             message='✨Проблем со связью не обнаружено 👌.'
                                     ' Приятного дня!✨')
+                        api.messages.send(peer_id=update['object']['user_id'],
+                                          attachment='doc-129298566_483539744')
                     else:
                         sleep(3)
                         api.messages.send(
                             peer_id=update['object']['user_id'],
                             message='В данным момент имеются проблемы 🚧 со'
                                     ' связью. Приносим извинения😔.')
-                else:
+                elif update['object']['user_id'] not in users:
                     tg_text = '👀   ' + time + ' \n ' + '👃   ' + name \
                               + ' ' + last_name + ' \n ' + '👅   ' + text
                     post(url + "sendMessage", data={'chat_id': nasa_id,
                                                     'text': tg_text})
-
+                    api.messages.send(
+                        peer_id=update['object']['user_id'],
+                        message=operator)
 
         ts = longPoll['ts']
